@@ -13,7 +13,9 @@ Add settings to NETWORK ADMIN SETTINGS tab in wp-admin. Settings section called 
 
 ## Compatible server API's
 
-*cPanel
+* cPanel
+
+## Methods 
 
 ### Add a new account
 
@@ -21,13 +23,15 @@ Add settings to NETWORK ADMIN SETTINGS tab in wp-admin. Settings section called 
  
 * Appends the name of the new account to an array called `tb_settings_mailboxes` using wp function `set_theme_mod`. `tb_settings_mailboxes` will contain an array of all the mailboxes created for a given wp site.
 
-**Method** `mailbox->add` 
+**Method:** 
+
+`mailbox->add` 
 
 **Properties:** 
 
 `account_name` (req'd) Name of the email account to add.
 
-'fowards_to' (optional) If filled in create an email forwarder instead of a standard email account.
+`fowards_to` (optional) If filled in create an email forwarder instead of a standard email account.
 
 Returns: true or error array
 
@@ -36,11 +40,13 @@ Returns: true or error array
 * Delete an email account in cPanel
 * Remove account name from `tb_settings_mailboxes`
 
-**Method** `mailbox->delete' 
+**Method:** 
+
+`mailbox->delete` 
 
 **Properties:** 
 
-'account_name' (req'd) Name of existing account to delete.
+`account_name` (req'd) Name of existing account to delete.
 
 Returns: true or error array
 
