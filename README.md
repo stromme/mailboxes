@@ -33,7 +33,7 @@ Add settings to NETWORK ADMIN SETTINGS tab in wp-admin. Settings section called 
 
 `fowards_to` (optional) If filled in create an email forwarder instead of a standard email account.
 
-Returns: true or error array
+Returns: status array
 
 ### Remove an account
 
@@ -48,7 +48,42 @@ Returns: true or error array
 
 `account_name` (req'd) Name of existing account to delete.
 
-Returns: true or error array
+Returns: status array
+
+### Update Account Password
+
+`mailbox->update_password`
+
+**Properties**
+
+`account_name` (req'd) Name of existing account to update
+
+`new_password` (req'd) New password to be updated
+
+Returns: status array
+
+## Settings
+
+The mailboxes configuration can only be accessed from **network admin `settings -> mailboxes` menu.
+
+Settings that can be updated in network admin:
+
+* Website host
+
+* Domain
+
+* cPanel port
+
+* Use SSL or not
+
+* Default quota (in Megabytes)
+
+* cPanel Username
+
+* cPanel Password
+
+These settings should be updated first before using any functions in site admin.
+
 
 ## Resources
 
