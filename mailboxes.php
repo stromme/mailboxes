@@ -40,6 +40,10 @@ class Mailboxes {
     $this->settings = get_option('network_admin_mailboxes_settings');
     $this->theme_mod_name = 'tb_settings_mailboxes';
     $this->mailbox = new Cpanel_Api_Email($this->settings);
+
+    add_action('wp_ajax_create_new_email', array($this, 'create_new_email_callback'));
+    add_action('wp_ajax_delete_email', array($this, 'delete_email_callback'));
+    add_action('wp_ajax_change_password', array($this, 'change_password_callback'));
   }
 
   /**
@@ -50,6 +54,9 @@ class Mailboxes {
    * @return null
    */
   function action_load_dependencies() {
+    wp_enqueue_script('mailboxes', plugins_url('mailboxes.js', __FILE__), array('jquery'), '20121205');
+    wp_enqueue_style( 'mailboxes', plugins_url( 'mailboxes.css', __FILE__ ));
+    wp_localize_script('mailboxes', 'ajaxurl', admin_url('admin-ajax.php'));
   }
 
   /**
@@ -97,7 +104,7 @@ class Mailboxes {
       update_option('network_admin_mailboxes_settings', $new_settings);
 
       // Queue error message
-      add_settings_error('general', 'settings_updated', __('Settings saved.'), 'updated');
+      add_settings_error('general', 'settings_updated', __('Settings saved'), 'updated');
     }
     else if (get_option('network_admin_mailboxes_settings')) {
       // Load settings if exist
@@ -154,25 +161,10 @@ class Mailboxes {
       $action = (isset($_POST['action'])?$_POST['action']:$_GET['action']);
       switch($action) {
         case 'add':
-          $new_email = $new_username.'@'.$this->settings["domain"];
-            
-          $valid = 1;
-          $error_string = '';
-          if(strlen($new_username)<=0){
-            $valid = 0;
-            $error_string .= "Please add username.<br />";
-          }
-          if(strlen($new_password)<5){
-            $valid = 0;
-            $error_string .= "Password length minimum 5 characters.<br />";
-          }
-
-          // Don't add same email
-          $email_list = get_theme_mod($this->theme_mod_name);
-          if($email_list && in_array($new_email, $email_list)){
-            $valid = 0;
-            $error_string .= "Email already exist.<br />";
-          }
+          $validation_result = $this->validate_add_email($new_username, $new_password);
+          $valid = $validation_result['valid'];
+          $error_string = $validation_result['error_string'];
+          $new_email = $validation_result['new_email'];
 
           // All good?
           if($valid){
@@ -187,7 +179,7 @@ class Mailboxes {
                 $email_list = array($new_email);
               }
               set_theme_mod($this->theme_mod_name, $email_list);
-              add_settings_error('general', 'settings_updated', __('Successfully add new email.'), 'updated');
+              add_settings_error('general', 'settings_updated', __('Successfully add new email'), 'updated');
               // Clear the form
               $new_username   = '';
               $new_password   = '';
@@ -231,15 +223,15 @@ class Mailboxes {
                 $index = array_search($delete_email, $email_list);
                 array_splice($email_list, $index, 1);
                 set_theme_mod($this->theme_mod_name, $email_list);
-                $success_messages .= 'Successfully remove email account '.$delete_email.'.<br />';
+                $success_messages .= 'Successfully remove email account '.$delete_email.'<br />';
               }
               else {
                 $reason = $status->reason.' ('.$delete_email.')<br />';
                 if($reason==NULL){
                   // The error is unknown, maybe the internet is not connected
-                  $reason = 'Connection error when removing '.$delete_email.'.<br />';
+                  $reason = 'Connection error when removing '.$delete_email.'<br />';
                 }
-                else if($status->reason=='Account does not exist.'){
+                else if($status->reason=='Account does not exist'){
                   // Remove from storage if username is stored but email account on cpanel is does not exist
                   $index = array_search($delete_email, $email_list);
                   array_splice($email_list, $index, 1);
@@ -250,7 +242,7 @@ class Mailboxes {
             }
             else {
               // If it's not exists in this list, tell user that it's already deleted
-              $error_messages .= 'The email '.$delete_email.' already deleted.';
+              $error_messages .= 'The email '.$delete_email.' already deleted';
             }
           }
           if($success_messages!='') add_settings_error('general', 'settings_updated', __($success_messages), 'updated');
@@ -265,10 +257,9 @@ class Mailboxes {
           $username = $_GET['username'];
           $email = $username.'@'.$this->settings['domain'];
           if($_POST['submit']){
-            // Make sure we only deleting account that we own
+            // Make sure we only change password for an account that we own
             $email_list = get_theme_mod($this->theme_mod_name);
-            $email_exist = in_array($email, $email_list);
-            if($email_exist){
+            if(in_array($email, $email_list)){
               $valid = 1;
               $error_string = '';
               if(strlen($_POST['password'])<5){
@@ -283,14 +274,14 @@ class Mailboxes {
               if($valid){
                 $status = $this->mailbox->update_password($username, $_POST['password']);
                 if($status->result==1){
-                  add_settings_error('general', 'settings_updated', __('Successfully change password for '.$email.'.'), 'updated');
+                  add_settings_error('general', 'settings_updated', __('Successfully changing password for '.$email), 'updated');
                 }
                 // If error is unknown
                 else if($status->reason==NULL) {
-                  add_settings_error('general', 'settings_updated', __('Unknown error when changing password for '.$email.'.'), 'error');
+                  add_settings_error('general', 'settings_updated', __('Unknown error when changing password for '.$email), 'error');
                 }
                 else {
-                  add_settings_error('general', 'settings_updated', __($status->reason.' ('.$email.').'), 'error');
+                  add_settings_error('general', 'settings_updated', __($status->reason.' ('.$email.')'), 'error');
                 }
               }
               else {
@@ -298,7 +289,7 @@ class Mailboxes {
               }
             }
             else {
-              add_settings_error('general', 'settings_updated', __('You can only change password for '.$email.'.'), 'error');
+              add_settings_error('general', 'settings_updated', __('You can only change password for email that you own'), 'error');
             }
           }
           break;
@@ -309,7 +300,7 @@ class Mailboxes {
       $domain = $settings["domain"];
     }
     else {
-      add_settings_error('general', 'settings_updated', __('No mailbox settings found. Please update your mailbox settings first.'), 'error');
+      add_settings_error('general', 'settings_updated', __('No mailbox settings found. Please update your mailbox settings first'), 'error');
       $setting_exists = false;
     }
     // Show message if exist
@@ -326,6 +317,29 @@ class Mailboxes {
       // Load settings form
       require(plugin_dir_path(__FILE__).'forms/site_admin_mailboxes_form.php');
     }
+  }
+
+  public function validate_add_email($new_username, $new_password){
+    $new_email = $new_username.'@'.$this->settings["domain"];
+    $valid = 1;
+    $error_string = '';
+    if(strlen($new_username)<=0){
+      $valid = 0;
+      $error_string .= "Please add username.<br />";
+    }
+    if(strlen($new_password)<5){
+      $valid = 0;
+      $error_string .= "Password length minimum 5 characters.<br />";
+    }
+
+    // Don't add same email
+    $email_list = get_theme_mod($this->theme_mod_name);
+    if($email_list && in_array($new_email, $email_list)){
+      $valid = 0;
+      $error_string .= "Email already exist.<br />";
+    }
+
+    return array('valid'=>$valid, 'new_email'=>$new_email, 'error_string'=>$error_string);
   }
 
   /**
@@ -347,9 +361,133 @@ class Mailboxes {
     }
     return $show_list;
   }
+
+  function create_new_email_callback(){
+    $new_username = $_POST['new_email'];
+    $new_password = $_POST['new_password'];
+    $new_forwarding = '';
+    $validation_result = $this->validate_add_email($new_username, $new_password);
+    $valid = $validation_result['valid'];
+    $error_string = $validation_result['error_string'];
+    $new_email = $validation_result['new_email'];
+    $status_text = '';
+    $status = 1;
+
+    // All good?
+    if($valid){
+      $status = $this->mailbox->add($new_username, $new_password, $new_forwarding);
+      // Add email account in cpanel is successfull
+      if($status->result==1){
+        $email_list = get_theme_mod($this->theme_mod_name);
+        if($email_list){
+          array_push($email_list,$new_email);
+        }
+        else{
+          $email_list = array($new_email);
+        }
+        set_theme_mod($this->theme_mod_name, $email_list);
+        $status_code = 1;
+        $status_message = 'Successfully add new email';
+      }
+      else {
+        $status_code = 0;
+        $status_message = $status->reason;
+      }
+    }
+    else {
+      $status_code = 0;
+      $status_message = $error_string;
+    }
+    
+    die(json_encode(array('status'=>$status_code,'status_message'=>$status_message,'account_username'=>$new_username,'account_email'=>$new_email)));
+  }
+
+  function delete_email_callback(){
+    $status_code = 1;
+    $status_message = '';
+    $email = $_POST['email'];
+    $email_list = get_theme_mod($this->theme_mod_name);
+    // Check if the removed addres is on this list, preventing removing another site's email
+    if(in_array($email, $email_list)){
+      $status = $this->mailbox->delete($email);
+      // If email on the cpanel is removed then remove it from our list
+      if($status->result==1){
+        $index = array_search($email, $email_list);
+        array_splice($email_list, $index, 1);
+        set_theme_mod($this->theme_mod_name, $email_list);
+        $status_message = 'Successfully remove email account '.$email;
+      }
+      else {
+        $reason = $status->reason;
+        if($reason==NULL){
+          // The error is unknown, maybe the internet is not connected
+          $reason = 'Connection error when removing '.$email;
+        }
+        else if($status->reason=='Account does not exist'){
+          // Remove from storage if username is stored but email account on cpanel is does not exist
+          $index = array_search($email, $email_list);
+          array_splice($email_list, $index, 1);
+          set_theme_mod($this->theme_mod_name, $email_list);
+        }
+        $status_code = 0;
+        $status_message = $reason;
+      }
+    }
+    else {
+      // If it's not exists in this list, tell user that it's already deleted
+      $status_code = 0;
+      $status_message = 'The email '.$email.' already deleted';
+    }
+    die(json_encode(array('status'=>$status_code,'status_message'=>$status_message,'account_email'=>$email)));
+  }
+
+  function change_password_callback(){
+    $status_code = 1;
+    $status_message = '';
+    $email = $_POST['email'];
+    $email_split = explode('@', $email);
+    $username = $email_split[0];
+    $password = $_POST['password'];
+
+    // Make sure we only change password for an account that we own
+    $email_list = get_theme_mod($this->theme_mod_name);
+    if(in_array($email, $email_list)){
+      $valid = 1;
+      $error_string = '';
+      if(strlen($_POST['password'])<5){
+        $valid = 0;
+        $error_string = "Password length minimum 5 characters";
+      }
+      // All good?
+      if($valid){
+        $status = $this->mailbox->update_password($username, $password);
+        if($status->result==1){
+          $status_message = 'Successfully changing password for '.$email;
+        }
+        // If error is unknown
+        else if($status->reason==NULL) {
+          $status_code = 0;
+          $status_message = 'Unknown error when changing password for '.$email;
+        }
+        else {
+          $status_code = 0;
+          $status_message = $status->reason;
+        }
+      }
+      else {
+        $status_code = 0;
+        $status_message = $error_string;
+      }
+    }
+    else {
+      $status_code = 0;
+      $status_message = 'You can only change password for email that you own';
+    }
+    die(json_encode(array('status'=>$status_code,'status_message'=>$status_message,'account_email'=>$email)));
+  }
 };
 
 /**
  * Initialize Mailboxes
  */
-add_action( 'plugins_loaded', array( 'Mailboxes', 'init' ));
+add_action( 'plugins_loaded', array( 'Mailboxes', 'init' ), 11);
