@@ -46,6 +46,7 @@ class Cpanel_Api_Query {
     curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, 15);
     curl_setopt($curl, CURLOPT_TIMEOUT, 15);
     curl_setopt($curl, CURLOPT_MAXREDIRS, 10);
+    curl_setopt($curl, CURLOPT_FAILONERROR, false);
     $header[0] = "Authorization: Basic ".$this->hash."\n\r";
     curl_setopt($curl, CURLOPT_HTTPHEADER, $header);
     curl_setopt($curl, CURLOPT_URL, $query);

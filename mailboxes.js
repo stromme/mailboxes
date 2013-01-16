@@ -40,11 +40,16 @@ $(document).ready(function(){
     }
 
     if(!valid){
-      var error_text = '<ul>';
-      $(error_strings).each(function(i, val){
-        error_text += '<li>'+val+'</li>';
-      });
-      error_text += '</ul>';
+      if(error_strings.length>1){
+        var error_text = '<ul>';
+        $(error_strings).each(function(i, val){
+          error_text += '<li>'+val+'</li>';
+        });
+        error_text += '</ul>';
+      }
+      else {
+        error_text = error_strings[0];
+      }
       bootstrap_alert(error_text, 'error');
     }
     else {
@@ -74,16 +79,18 @@ $(document).ready(function(){
               var retype_new_password = $('#retype-change-new-password');
               $('#change-password').modal();
               $('#confirm-change-password').unbind('click').click(function(){
-                confirm_change_password(current_email, new_password, retype_new_password);
-                $('#change-password').modal('hide');
+                confirm_change_password(current_email, new_password, retype_new_password, function(){
+                  $('#change-password').modal('hide');
+                });
               });
             });
             $('.action-delete').click(function() {
               var current_email = $('.email-account', $(this).closest('.tier')).val();
               $('#delete-confirm').modal();
               $('#confirm-delete-email').unbind('click').click(function(){
-                confirm_delete_email(current_email);
-                $('#delete-confirm').modal('hide');
+                confirm_delete_email(current_email, function(){
+                  $('#delete-confirm').modal('hide');
+                });
               });
             });
             email_row.slideDown(200, function(){
@@ -138,21 +145,33 @@ function bootstrap_alert(message, alert_type){
   });
 }
 
+function show_delete_email_spinner(){
+  $("#confirm-delete-email").parent().prepend('<span id="mailboxes-deletemail-loader" class="button-side-loader"><span class="loader"></span></span>');
+  $('#mailboxes-deletemail-loader .loader').spin('medium-left', '#000000');
+  $('#mailboxes-deletemail-loader').fadeIn(300);
+}
+
+function show_change_password_spinner(){
+  $("#confirm-change-password").parent().prepend('<span id="mailboxes-changepass-loader" class="button-side-loader"><span class="loader"></span></span>');
+  $('#mailboxes-changepass-loader .loader').spin('medium-left', '#000000');
+  $('#mailboxes-changepass-loader').fadeIn(300);
+}
+
 function show_add_email_spinner(){
   $('<div id="mailboxes-loader"><div class="loader"></div></div>').insertBefore("#emails-container");
   $('#mailboxes-loader .loader').spin('medium-left', '#000000');
   $('#mailboxes-loader').slideDown(200);
 }
 
-function confirm_delete_email(email){
-  show_add_email_spinner();
+function confirm_delete_email(email, callback){
+  show_delete_email_spinner();
   var data = {
     action: 'delete_email',
     'email': email
   };
   $.post(ajaxurl, data, function(response) {
     var json_response = JSON.parse(response);
-    $('#mailboxes-loader').slideUp(200, function(){
+    $('#mailboxes-deletemail-loader').slideUp(200, function(){
       $(this).remove();
       if(json_response.status==1){
         var tier = $("#emails-container .tier").filter(function(){
@@ -160,6 +179,7 @@ function confirm_delete_email(email){
         });
         tier.slideUp(200, function(){$(this).remove();});
         bootstrap_alert(json_response.status_message, 'success');
+        if(typeof(callback)=='function') callback();
       }
       else {
         bootstrap_alert(json_response.status_message, 'error');
@@ -182,16 +202,8 @@ function confirm_change_password(email, new_password_elm, retype_new_password_el
     valid = false;
   }
 
-  if(!valid){
-    bootstrap_alert(error_string, 'error');
-  }
-  else {
-    // Do callback, which is close the modal when validation is okay
-    if(typeof(callback)=='function') callback();
-    // Reset the form
-    new_password_elm.val('');
-    retype_new_password_elm.val('');
-    show_spinner();
+  if(valid){
+    show_change_password_spinner();
     var data = {
       action: 'change_password',
       'email': email,
@@ -199,15 +211,23 @@ function confirm_change_password(email, new_password_elm, retype_new_password_el
     };
     $.post(ajaxurl, data, function(response) {
       var json_response = JSON.parse(response);
-      $('#mailboxes-loader').slideUp(200, function(){
+      $('#mailboxes-changepass-loader').fadeOut(300, function(){
         $(this).remove();
         if(json_response.status==1){
           bootstrap_alert(json_response.status_message, 'success');
+          // Do callback, which is close the modal when validation is okay
+          if(typeof(callback)=='function') callback();
+          // Reset the form
+          new_password_elm.val('');
+          retype_new_password_elm.val('');
         }
         else {
           bootstrap_alert(json_response.status_message, 'error');
         }
       });
     });
+  }
+  else {
+    bootstrap_alert(error_string, 'error');
   }
 }
