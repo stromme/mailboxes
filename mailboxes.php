@@ -231,7 +231,8 @@ class Mailboxes {
                   // The error is unknown, maybe the internet is not connected
                   $reason = 'Connection error when removing '.$delete_email.'<br />';
                 }
-                else if($status->reason=='Account does not exist'){
+                else if($status->reason=='Account does not exist.'){
+                  $error_messages .= "here ";
                   // Remove from storage if username is stored but email account on cpanel is does not exist
                   $index = array_search($delete_email, $email_list);
                   array_splice($email_list, $index, 1);
@@ -422,20 +423,21 @@ class Mailboxes {
         if($reason==NULL){
           // The error is unknown, maybe the internet is not connected
           $reason = 'Connection error when removing '.$email;
+          $status_code = 0;
         }
-        else if($status->reason=='Account does not exist'){
+        else if($status->reason=='Account does not exist.'){
           // Remove from storage if username is stored but email account on cpanel is does not exist
           $index = array_search($email, $email_list);
           array_splice($email_list, $index, 1);
           set_theme_mod($this->theme_mod_name, $email_list);
+          $status_code = 1;
         }
-        $status_code = 0;
         $status_message = $reason;
       }
     }
     else {
       // If it's not exists in this list, tell user that it's already deleted
-      $status_code = 0;
+      $status_code = 1;
       $status_message = 'The email '.$email.' already deleted';
     }
     die(json_encode(array('status'=>$status_code,'status_message'=>$status_message,'account_email'=>$email)));

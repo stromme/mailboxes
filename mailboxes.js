@@ -72,26 +72,6 @@ $(document).ready(function(){
             retype_new_pass_elm.val('');
             forwarding.val('');
             var email_row = $("#emails-container .tier").first();
-            $('.action-password').click(function() {
-              var current_email = $('.email-account', $(this).closest('.tier')).val();
-              var new_password = $('#change-new-password');
-              var retype_new_password = $('#retype-change-new-password');
-              $('#change-password').modal();
-              $('#confirm-change-password').unbind('click').click(function(){
-                confirm_change_password(current_email, new_password, retype_new_password, function(){
-                  $('#change-password').modal('hide');
-                });
-              });
-            });
-            $('.action-delete').click(function() {
-              var current_email = $('.email-account', $(this).closest('.tier')).val();
-              $('#delete-confirm').modal();
-              $('#confirm-delete-email').unbind('click').click(function(){
-                confirm_delete_email(current_email, function(){
-                  $('#delete-confirm').modal('hide');
-                });
-              });
-            });
             email_row.slideDown(200, function(){
               $(this).removeAttr('style');
               email_row.addClass('highlighted');
@@ -107,24 +87,9 @@ $(document).ready(function(){
   });
 });
 
-function empty(value){
-  return (!value || value.length<=0);
-}
-
-function is_email_account(value){
-  var filter = /^([a-zA-Z0-9_\.\-])+$/;
-  return filter.test(value);
-}
-
-function is_email(value){
-  var filter = /^([a-zA-Z0-9_\.\-])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/;
-  return filter.test(value);
-}
-
 function email_list_template(email_account){
   var email_tmpl =
-    '<div class="tier" style="display:none;">'+
-      '<input type="hidden" class="email-account" value="'+email_account+'" />'+
+    '<div class="tier" style="display:none;" email-account="'+email_account+'">'+
       '<header><h4>'+email_account+'</h4></header>'+
       '<nav>'+
         '<a class="action-password" href="#">'+
@@ -136,14 +101,6 @@ function email_list_template(email_account){
       '</nav>'+
     '</div>';
   return email_tmpl;
-}
-
-function bootstrap_alert(message, alert_type){
-  var alert_elm = $('#alert');
-  alert_elm.html('<div class="alert alert-'+alert_type+'"><a class="close" data-dismiss="alert">×</a><span>'+message+'</span></div>')
-  alert_elm.fadeIn(500, function(){
-    setTimeout(function(){alert_elm.fadeOut(1000);}, 3000)
-  });
 }
 
 function show_delete_email_spinner(){
@@ -164,7 +121,7 @@ function show_add_email_spinner(){
   $('#mailboxes-loader').slideDown(200);
 }
 
-function confirm_delete_email(email, callback){
+function confirm_delete_email(email, success_callback, failed_callback){
   show_delete_email_spinner();
   var data = {
     action: 'delete_email',
@@ -172,21 +129,20 @@ function confirm_delete_email(email, callback){
   };
   $.post(ajaxurl, data, function(response) {
     var json_response = JSON.parse(response);
-    $('#mailboxes-deletemail-loader').slideUp(200, function(){
+    $('#mailboxes-deletemail-loader').fadeOut(300, function(){
       $(this).remove();
       if(json_response.status==1){
-        if(typeof(callback)=='function') callback();
+        if(typeof(success_callback)=='function') success_callback();
       }
       else {
         bootstrap_alert(json_response.status_message, 'error');
+        if(typeof(failed_callback)=='function') failed_callback();
       }
     });
   });
 }
 
-function confirm_change_password(email, new_password_elm, retype_new_password_elm, callback){
-  var new_password = new_password_elm.val();
-  var retype_new_password = retype_new_password_elm.val();
+function confirm_change_password(email, new_password, retype_new_password, success_callback, failed_callback){
   var error_string = '';
   var valid = true;
   if(empty(new_password) || new_password.length<5){
@@ -212,13 +168,11 @@ function confirm_change_password(email, new_password_elm, retype_new_password_el
         if(json_response.status==1){
           bootstrap_alert(json_response.status_message, 'success');
           // Do callback, which is close the modal when validation is okay
-          if(typeof(callback)=='function') callback();
-          // Reset the form
-          new_password_elm.val('');
-          retype_new_password_elm.val('');
+          if(typeof(success_callback)=='function') success_callback();
         }
         else {
           bootstrap_alert(json_response.status_message, 'error');
+          if(typeof(failed_callback)=='function') failed_callback();
         }
       });
     });
