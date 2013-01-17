@@ -67,7 +67,6 @@ $(document).ready(function(){
           $(this).remove();
           if(json_response.status==1){
             $("#emails-container").prepend(email_list_template(json_response.account_email));
-            bootstrap_alert(json_response.status_message, 'success');
             new_email_elm.val('');
             new_pass_elm.val('');
             retype_new_pass_elm.val('');
@@ -95,6 +94,8 @@ $(document).ready(function(){
             });
             email_row.slideDown(200, function(){
               $(this).removeAttr('style');
+              email_row.addClass('highlighted');
+              setTimeout(function(){email_row.removeClass('highlighted');}, 1000);
             });
           }
           else {
@@ -174,11 +175,6 @@ function confirm_delete_email(email, callback){
     $('#mailboxes-deletemail-loader').slideUp(200, function(){
       $(this).remove();
       if(json_response.status==1){
-        var tier = $("#emails-container .tier").filter(function(){
-          return $('.email-account', this).val()==json_response.account_email;
-        });
-        tier.slideUp(200, function(){$(this).remove();});
-        bootstrap_alert(json_response.status_message, 'success');
         if(typeof(callback)=='function') callback();
       }
       else {

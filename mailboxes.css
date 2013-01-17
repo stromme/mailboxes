@@ -8,3 +8,35 @@
   padding: 4px 0;
   width: 40px;
 }
+
+@keyframes highlight {
+ 	0% {background: #FFFFFF}
+ 	20% {background: #33CCFF}
+ 	100% {background: #FFFFFF;}
+}
+
+@-moz-keyframes highlight {
+ 	0% {background: #FFFFFF}
+ 	20% {background: #33CCFF}
+ 	100% {background: #FFFFFF;}
+}
+
+@-webkit-keyframes highlight {
+ 	0% {background: #FFFFFF}
+ 	20% {background: #33CCFF}
+ 	100% {background: #FFFFFF;}
+}
+
+@-o-keyframes highlight {
+ 	0% {background: #FFFFFF}
+ 	20% {background: #33CCFF}
+ 	100% {background: #FFFFFF;}
+}
+
+.highlighted {
+	animation: highlight 1s;
+	-moz-animation: highlight 1s;
+	-webkit-animation: highlight 1s;
+	-o-animation: highlight 1s;
+  
+}

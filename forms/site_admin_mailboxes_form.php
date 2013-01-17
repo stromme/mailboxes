@@ -38,7 +38,7 @@
     </div>
   </div>
 
-  <form method="post" action="../">
+  <form method="post" action="">
   <?php
     $mailbox_list->prepare_items();
     $mailbox_list->display();
