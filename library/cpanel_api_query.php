@@ -35,18 +35,13 @@ class Cpanel_Api_Query {
    */
   public function query($query) {
     $curl = curl_init();
-    curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
-    curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, false);
-    curl_setopt($curl, CURLOPT_HEADER, false);
-    curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
-    curl_setopt($curl, CURLOPT_ENCODING, "");
-    curl_setopt($curl, CURLOPT_USERAGENT, "spider");
-    curl_setopt($curl, CURLOPT_AUTOREFERER, true);
-    curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, 15);
-    curl_setopt($curl, CURLOPT_TIMEOUT, 15);
+    curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, 0);
+    curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, 0);
+    curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+    curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, 10);
+    curl_setopt($curl, CURLOPT_TIMEOUT, 10);
     curl_setopt($curl, CURLOPT_MAXREDIRS, 10);
-    curl_setopt($curl, CURLOPT_FAILONERROR, false);
+    curl_setopt($curl, CURLOPT_FAILONERROR, 0);
     $header[0] = "Authorization: Basic ".$this->hash."\n\r";
     curl_setopt($curl, CURLOPT_HTTPHEADER, $header);
     curl_setopt($curl, CURLOPT_URL, $query);
@@ -55,7 +50,6 @@ class Cpanel_Api_Query {
       error_log("curl_exec threw error \"".curl_error($curl)."\" for $query");
     }
     curl_close($curl);
-
     return $result;
   }
 
@@ -90,8 +84,8 @@ class Cpanel_Api_Query {
 
     $a = 1;
     foreach ($param as $key => $val) {
-      if (($key != 'function') && ($key != 'module')) {
-        if ($a <= $check - 1) {
+      if(($key!='function') && ($key!='module')){
+        if ($a<$check){
           $out .= $key.'='.$val.'&';
         } else {
           $out .= $key.'='.$val;
@@ -99,6 +93,7 @@ class Cpanel_Api_Query {
       }
       $a++;
     }
+
     return $out;
   }
 }

@@ -87,6 +87,11 @@ $(document).ready(function(){
   });
 });
 
+/**
+ * Template for email list
+ * 
+ * @param email_account
+ */
 function email_list_template(email_account){
   var email_tmpl =
     '<div class="tier" style="display:none;" email-account="'+email_account+'">'+
@@ -103,32 +108,51 @@ function email_list_template(email_account){
   return email_tmpl;
 }
 
+/**
+ * Function for showing the spinner when in progress of deleting email
+ */
 function show_delete_email_spinner(){
   $("#confirm-delete-email").parent().prepend('<span id="mailboxes-deletemail-loader" class="button-side-loader"><span class="loader"></span></span>');
   $('#mailboxes-deletemail-loader .loader').spin('medium-left', '#000000');
   $('#mailboxes-deletemail-loader').fadeIn(300);
 }
 
+/**
+ * Function for showing the spinner when in progress of changing email password
+ */
 function show_change_password_spinner(){
   $("#confirm-change-password").parent().prepend('<span id="mailboxes-changepass-loader" class="button-side-loader"><span class="loader"></span></span>');
   $('#mailboxes-changepass-loader .loader').spin('medium-left', '#000000');
   $('#mailboxes-changepass-loader').fadeIn(300);
 }
 
+/**
+ * Function for showing the spinner when in progress of adding email
+ */
 function show_add_email_spinner(){
   $('<div id="mailboxes-loader"><div class="loader"></div></div>').insertBefore("#emails-container");
   $('#mailboxes-loader .loader').spin('medium-left', '#000000');
   $('#mailboxes-loader').slideDown(200);
 }
 
+/**
+ * Function to confirm deleting email by ajax post, run success_callback if success, and failed_callback if otherwise
+ *
+ * @param email
+ * @param success_callback
+ * @param failed_callback
+ */
 function confirm_delete_email(email, success_callback, failed_callback){
-  show_delete_email_spinner();
   var data = {
     action: 'delete_email',
     'email': email
   };
+
+  // Show spinner while waiting
+  show_delete_email_spinner();
   $.post(ajaxurl, data, function(response) {
     var json_response = JSON.parse(response);
+    // Remove loading spinner before something else
     $('#mailboxes-deletemail-loader').fadeOut(300, function(){
       $(this).remove();
       if(json_response.status==1){
@@ -142,6 +166,15 @@ function confirm_delete_email(email, success_callback, failed_callback){
   });
 }
 
+/**
+ * Function to confirm changing password by ajax post, run success_callback if success, and failed_callback if otherwise
+ *
+ * @param email
+ * @param new_password
+ * @param retype_new_password
+ * @param success_callback
+ * @param failed_callback
+ */
 function confirm_change_password(email, new_password, retype_new_password, success_callback, failed_callback){
   var error_string = '';
   var valid = true;

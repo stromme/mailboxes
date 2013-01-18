@@ -154,8 +154,8 @@ class Mailboxes {
     $setting_exists = true; // Useful in form template
 
     if (get_option('network_admin_mailboxes_settings')) {
-      $new_username = $_POST['username'];
-      $new_password = $_POST['password'];
+      $new_username   = $_POST['username'];
+      $new_password   = $_POST['password'];
       $new_forwarding = $_POST['forwarding'];
       $show_form = false;
       $action = (isset($_POST['action'])?$_POST['action']:$_GET['action']);
@@ -320,6 +320,14 @@ class Mailboxes {
     }
   }
 
+  /**
+   * The function for validating email, to be used in admin and ajax
+   *
+   * @uses get_theme_mod, strlen, in_array
+   * @param  $new_username
+   * @param  $new_password
+   * @return array
+   */
   public function validate_add_email($new_username, $new_password){
     $new_email = $new_username.'@'.$this->settings["domain"];
     $valid = 1;
@@ -346,12 +354,12 @@ class Mailboxes {
   /**
    * The function that reads from theme mod variable tb_settings_mailboxes
    *
-   * @uses
+   * @uses get_theme_mod, array_push, explode
    * @action
    * @return array list of emails
    */
   public function list_email(){
-    $email_list = get_theme_mod($this->theme_mod_name);
+    $email_list = (Array)get_theme_mod($this->theme_mod_name);
     $show_list  = array();
     if($email_list){
       foreach($email_list as $email){
@@ -363,22 +371,30 @@ class Mailboxes {
     return $show_list;
   }
 
+  /**
+   * Ajax function for creating email on manage email module
+   *
+   * @uses get_theme_mod, set_theme_mod, json_encode, array_push
+   * @action wp_ajax_create_new_email
+   * @return void
+   */
   function create_new_email_callback(){
-    $new_username = $_POST['new_email'];
-    $new_password = $_POST['new_password'];
-    $new_forwarding = '';
+    $new_username   = $_POST['new_email'];
+    $new_password   = $_POST['new_password'];
+    $new_forwarding = $_POST['new_forwarding'];
+    
+    // Validate the new email and password
     $validation_result = $this->validate_add_email($new_username, $new_password);
     $valid = $validation_result['valid'];
     $error_string = $validation_result['error_string'];
     $new_email = $validation_result['new_email'];
-    $status_text = '';
-    $status = 1;
 
     // All good?
     if($valid){
       $status = $this->mailbox->add($new_username, $new_password, $new_forwarding);
       // Add email account in cpanel is successfull
       if($status->result==1){
+        // If adding email in cpanel is success, then add it to the theme mod
         $email_list = get_theme_mod($this->theme_mod_name);
         if($email_list){
           array_push($email_list,$new_email);
@@ -387,6 +403,8 @@ class Mailboxes {
           $email_list = array($new_email);
         }
         set_theme_mod($this->theme_mod_name, $email_list);
+
+        // Set status code and message
         $status_code = 1;
         $status_message = 'Successfully add new email';
       }
@@ -399,17 +417,25 @@ class Mailboxes {
       $status_code = 0;
       $status_message = $error_string;
     }
-    
+
+    // Return ajax response as json string
     die(json_encode(array('status'=>$status_code,'status_message'=>$status_message,'account_username'=>$new_username,'account_email'=>$new_email)));
   }
 
+  /**
+   * Ajax function for deleting email on manage email module
+   *
+   * @uses get_theme_mod, array_search, array_splice, set_theme_mod, json_encode
+   * @action wp_ajax_delete_email
+   * @return void
+   */
   function delete_email_callback(){
     $status_code = 1;
-    $status_message = '';
-    $email = $_POST['email'];
-    $email_list = get_theme_mod($this->theme_mod_name);
+    $email       = $_POST['email'];
+    $email_list  = get_theme_mod($this->theme_mod_name);
     // Check if the removed addres is on this list, preventing removing another site's email
     if(in_array($email, $email_list)){
+      // Delete email using API
       $status = $this->mailbox->delete($email);
       // If email on the cpanel is removed then remove it from our list
       if($status->result==1){
@@ -440,16 +466,23 @@ class Mailboxes {
       $status_code = 1;
       $status_message = 'The email '.$email.' already deleted';
     }
+
+    // Return ajax response as json string
     die(json_encode(array('status'=>$status_code,'status_message'=>$status_message,'account_email'=>$email)));
   }
 
+  /**
+   * Ajax function for change password on manage email module
+   *
+   * @uses 
+   * @action wp_ajax_delete_email
+   * @return void
+   */
   function change_password_callback(){
-    $status_code = 1;
-    $status_message = '';
-    $email = $_POST['email'];
+    $email       = $_POST['email'];
     $email_split = explode('@', $email);
-    $username = $email_split[0];
-    $password = $_POST['password'];
+    $username    = $email_split[0];
+    $password    = $_POST['password'];
 
     // Make sure we only change password for an account that we own
     $email_list = get_theme_mod($this->theme_mod_name);
@@ -460,14 +493,16 @@ class Mailboxes {
         $valid = 0;
         $error_string = "Password length minimum 5 characters";
       }
+      
       // All good?
       if($valid){
         $status = $this->mailbox->update_password($username, $password);
         if($status->result==1){
+          $status_code = 1;
           $status_message = 'Successfully changing password for '.$email;
         }
         // If error is unknown
-        else if($status->reason==NULL) {
+        else if($status->reason==NULL){
           $status_code = 0;
           $status_message = 'Unknown error when changing password for '.$email;
         }
@@ -485,6 +520,7 @@ class Mailboxes {
       $status_code = 0;
       $status_message = 'You can only change password for email that you own';
     }
+    // Return ajax response as json string
     die(json_encode(array('status'=>$status_code,'status_message'=>$status_message,'account_email'=>$email)));
   }
 };
