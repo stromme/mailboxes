@@ -82,6 +82,12 @@ $(document).ready(function(){
             bootstrap_alert(json_response.status_message, 'error');
           }
         });
+      })
+      .error(function() {
+        $('#mailboxes-loader').fadeOut(200, function(){
+          $(this).remove();
+          bootstrap_alert("Connection error", 'error');
+        });
       });
     }
   });
@@ -163,6 +169,12 @@ function confirm_delete_email(email, success_callback, failed_callback){
         if(typeof(failed_callback)=='function') failed_callback();
       }
     });
+  })
+  .error(function() {
+    $('#mailboxes-deletemail-loader').fadeOut(200, function(){
+      $(this).remove();
+      bootstrap_alert("Connection error", 'error');
+    });
   });
 }
 
@@ -207,6 +219,12 @@ function confirm_change_password(email, new_password, retype_new_password, succe
           bootstrap_alert(json_response.status_message, 'error');
           if(typeof(failed_callback)=='function') failed_callback();
         }
+      });
+    })
+    .error(function() {
+      $('#mailboxes-changepass-loader').fadeOut(200, function(){
+        $(this).remove();
+        bootstrap_alert("Connection error", 'error');
       });
     });
   }
