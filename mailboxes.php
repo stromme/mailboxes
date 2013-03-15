@@ -35,8 +35,8 @@ class Mailboxes {
     add_action('admin_menu', array($this, 'action_admin_menu'));
 
     // Initialize the cpanel email API
-    require(plugin_dir_path(__FILE__).'library/cpanel_api_query.php');
-    require(plugin_dir_path(__FILE__).'library/cpanel_api_email.php');
+    require_once(plugin_dir_path(__FILE__).'library/cpanel_api_query.php');
+    require_once(plugin_dir_path(__FILE__).'library/cpanel_api_email.php');
     $this->settings = get_option('network_admin_mailboxes_settings');
     $this->theme_mod_name = 'tb_settings_mailboxes';
     $this->mailbox = new Cpanel_Api_Email($this->settings);
@@ -171,7 +171,14 @@ class Mailboxes {
             $status = $this->mailbox->add($new_username, $new_password, $new_forwarding);
             // Add email account in cpanel is successfull
             if($status->result==1){
-              $email_list = get_theme_mod($this->theme_mod_name);
+              $mailboxes_list = $this->email_listing();
+              $email_list = array();
+              if(count($mailboxes_list)>0){
+                foreach($mailboxes_list as $mailbox){
+                  array_push($email_list, $mailbox->email);
+                }
+              }
+              //$email_list = get_theme_mod($this->theme_mod_name);
               if($email_list){
                 array_push($email_list,$new_email);
               }
@@ -214,7 +221,14 @@ class Mailboxes {
           $success_messages = '';
           $error_messages = '';
           foreach($delete_emails as $delete_email){
-            $email_list = get_theme_mod($this->theme_mod_name);
+            $mailboxes_list = $this->email_listing();
+            $email_list = array();
+            if(count($mailboxes_list)>0){
+              foreach($mailboxes_list as $mailbox){
+                array_push($email_list, $mailbox->email);
+              }
+            }
+            //$email_list = get_theme_mod($this->theme_mod_name);
             // Check if the removed addres is on this list, preventing removing another site's email
             if(in_array($delete_email, $email_list)){
               $status = $this->mailbox->delete($delete_email);
@@ -259,7 +273,14 @@ class Mailboxes {
           $email = $username.'@'.$this->settings['domain'];
           if($_POST['submit']){
             // Make sure we only change password for an account that we own
-            $email_list = get_theme_mod($this->theme_mod_name);
+            $mailboxes_list = $this->email_listing();
+            $email_list = array();
+            if(count($mailboxes_list)>0){
+              foreach($mailboxes_list as $mailbox){
+                array_push($email_list, $mailbox->email);
+              }
+            }
+            //$email_list = get_theme_mod($this->theme_mod_name);
             if(in_array($email, $email_list)){
               $valid = 1;
               $error_string = '';
@@ -342,7 +363,14 @@ class Mailboxes {
     }
 
     // Don't add same email
-    $email_list = get_theme_mod($this->theme_mod_name);
+    $mailboxes_list = $this->email_listing();
+    $email_list = array();
+    if(count($mailboxes_list)>0){
+      foreach($mailboxes_list as $mailbox){
+        array_push($email_list, $mailbox->email);
+      }
+    }
+    //$email_list = get_theme_mod($this->theme_mod_name);
     if($email_list && in_array($new_email, $email_list)){
       $valid = 0;
       $error_string .= "Email already exist.<br />";
@@ -359,7 +387,14 @@ class Mailboxes {
    * @return array list of emails
    */
   public function list_email(){
-    $email_list = (Array)get_theme_mod($this->theme_mod_name);
+    $mailboxes_list = $this->email_listing();
+    $email_list = array();
+    if(count($mailboxes_list)>0){
+      foreach($mailboxes_list as $mailbox){
+        array_push($email_list, $mailbox->email);
+      }
+    }
+    //$email_list = (Array)get_theme_mod($this->theme_mod_name);
     $show_list  = array();
     if($email_list){
       foreach($email_list as $email){
@@ -395,7 +430,14 @@ class Mailboxes {
       // Add email account in cpanel is successfull
       if($status->result==1){
         // If adding email in cpanel is success, then add it to the theme mod
-        $email_list = get_theme_mod($this->theme_mod_name);
+        $mailboxes_list = $this->email_listing();
+        $email_list = array();
+        if(count($mailboxes_list)>0){
+          foreach($mailboxes_list as $mailbox){
+            array_push($email_list, $mailbox->email);
+          }
+        }
+        //$email_list = get_theme_mod($this->theme_mod_name);
         if($email_list){
           array_push($email_list,$new_email);
         }
@@ -432,7 +474,14 @@ class Mailboxes {
   function delete_email_callback(){
     $status_code = 1;
     $email       = $_POST['email'];
-    $email_list  = get_theme_mod($this->theme_mod_name);
+    $mailboxes_list = $this->email_listing();
+    $email_list = array();
+    if(count($mailboxes_list)>0){
+      foreach($mailboxes_list as $mailbox){
+        array_push($email_list, $mailbox->email);
+      }
+    }
+    //$email_list  = get_theme_mod($this->theme_mod_name);
     // Check if the removed addres is on this list, preventing removing another site's email
     if(in_array($email, $email_list)){
       // Delete email using API
@@ -485,7 +534,14 @@ class Mailboxes {
     $password    = $_POST['password'];
 
     // Make sure we only change password for an account that we own
-    $email_list = get_theme_mod($this->theme_mod_name);
+    $mailboxes_list = $this->email_listing();
+    $email_list = array();
+    if(count($mailboxes_list)>0){
+      foreach($mailboxes_list as $mailbox){
+        array_push($email_list, $mailbox->email);
+      }
+    }
+    //$email_list = get_theme_mod($this->theme_mod_name);
     if(in_array($email, $email_list)){
       $valid = 1;
       $error_string = '';
@@ -522,6 +578,15 @@ class Mailboxes {
     }
     // Return ajax response as json string
     die(json_encode(array('status'=>$status_code,'status_message'=>$status_message,'account_email'=>$email)));
+  }
+
+  /**
+   * List email from cpanel
+   *
+   * @return type
+   */
+  public function email_listing(){
+    return $this->mailbox->list_mail();
   }
 };
 

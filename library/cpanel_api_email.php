@@ -28,7 +28,7 @@ class Cpanel_Api_Email extends Cpanel_Api_Query {
     $query = $this->build_query($input);
     $raw = $this->query($query);
     $ob = json_decode($raw, false);
-    return $status = $ob->cpanelresult->data;
+    return $ob->cpanelresult->data;
   }
 
 
@@ -61,6 +61,7 @@ class Cpanel_Api_Email extends Cpanel_Api_Query {
     $query = $this->build_query($input);
     $raw = $this->query($query);
     $ob = json_decode($raw, false);
+    if(gettype($ob->cpanelresult->data)=='object') return $ob->cpanelresult->data;
     return $ob->cpanelresult->data[0];
   }
 
@@ -85,7 +86,7 @@ class Cpanel_Api_Email extends Cpanel_Api_Query {
     $query = $this->build_query($input);
     $raw = $this->query($query);
     $ob = json_decode($raw, false);
-    //$status = $ob->cpanelresult->data[0]->result;
+    if(gettype($ob->cpanelresult->data)=='object') return $ob->cpanelresult->data;
     return $ob->cpanelresult->data[0];
   }
 
@@ -112,6 +113,7 @@ class Cpanel_Api_Email extends Cpanel_Api_Query {
     $query = $this->build_query($input);
     $raw = $this->query($query);
     $ob = json_decode($raw, false);
+    if(gettype($ob->cpanelresult->data)=='object') return $ob->cpanelresult->data;
     return $ob->cpanelresult->data[0];
   }
 
