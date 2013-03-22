@@ -54,9 +54,11 @@ class Mailboxes {
    * @return null
    */
   function action_load_dependencies() {
-    wp_enqueue_script('mailboxes', plugins_url('mailboxes.js', __FILE__), array('jquery'), '20121205');
-    wp_enqueue_style( 'mailboxes', plugins_url( 'mailboxes.css', __FILE__ ));
-    wp_localize_script('mailboxes', 'ajaxurl', admin_url('admin-ajax.php'));
+    if(is_user_logged_in() && (strstr($_SERVER['REQUEST_URI'], 'toolbox') || strstr($_SERVER['REQUEST_URI'], 'wp-admin'))){
+      wp_enqueue_script('mailboxes', plugins_url('mailboxes.js', __FILE__), array('jquery'), '20121205');
+      wp_enqueue_style( 'mailboxes', plugins_url( 'mailboxes.css', __FILE__ ));
+      wp_localize_script('mailboxes', 'ajaxurl', admin_url('admin-ajax.php'));
+    }
   }
 
   /**
