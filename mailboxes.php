@@ -20,7 +20,7 @@ class Mailboxes {
   /* Our class attributes */
   private $settings=array();
   private $mailbox;
-  private $theme_mod_name;
+  private $option_name;
 
   // To initialize the class without global variable
   public static function init(){
@@ -38,7 +38,7 @@ class Mailboxes {
     require_once(plugin_dir_path(__FILE__).'library/cpanel_api_query.php');
     require_once(plugin_dir_path(__FILE__).'library/cpanel_api_email.php');
     $this->settings = get_option('network_admin_mailboxes_settings');
-    $this->theme_mod_name = 'tb_settings_mailboxes';
+    $this->option_name = 'tb_settings_mailboxes';
     $this->mailbox = new Cpanel_Api_Email($this->settings);
 
     add_action('wp_ajax_create_new_email', array($this, 'create_new_email_callback'));
@@ -180,14 +180,13 @@ class Mailboxes {
                   array_push($email_list, $mailbox->email);
                 }
               }
-              //$email_list = get_theme_mod($this->theme_mod_name);
               if($email_list){
                 array_push($email_list,$new_email);
               }
               else{
                 $email_list = array($new_email);
               }
-              set_theme_mod($this->theme_mod_name, $email_list);
+              update_option($this->option_name, $email_list);
               add_settings_error('general', 'settings_updated', __('Successfully add new email'), 'updated');
               // Clear the form
               $new_username   = '';
@@ -230,7 +229,6 @@ class Mailboxes {
                 array_push($email_list, $mailbox->email);
               }
             }
-            //$email_list = get_theme_mod($this->theme_mod_name);
             // Check if the removed addres is on this list, preventing removing another site's email
             if(in_array($delete_email, $email_list)){
               $status = $this->mailbox->delete($delete_email);
@@ -238,7 +236,7 @@ class Mailboxes {
               if($status->result==1){
                 $index = array_search($delete_email, $email_list);
                 array_splice($email_list, $index, 1);
-                set_theme_mod($this->theme_mod_name, $email_list);
+                update_option($this->option_name, $email_list);
                 $success_messages .= 'Successfully remove email account '.$delete_email.'<br />';
               }
               else {
@@ -252,7 +250,7 @@ class Mailboxes {
                   // Remove from storage if username is stored but email account on cpanel is does not exist
                   $index = array_search($delete_email, $email_list);
                   array_splice($email_list, $index, 1);
-                  set_theme_mod($this->theme_mod_name, $email_list);
+                  update_option($this->option_name, $email_list);
                 }
                 $error_messages .= $reason;
               }
@@ -282,7 +280,7 @@ class Mailboxes {
                 array_push($email_list, $mailbox->email);
               }
             }
-            //$email_list = get_theme_mod($this->theme_mod_name);
+            //$email_list = get_option($this->option_name);
             if(in_array($email, $email_list)){
               $valid = 1;
               $error_string = '';
@@ -346,7 +344,7 @@ class Mailboxes {
   /**
    * The function for validating email, to be used in admin and ajax
    *
-   * @uses get_theme_mod, strlen, in_array
+   * @uses get_option, strlen, in_array
    * @param  $new_username
    * @param  $new_password
    * @return array
@@ -372,7 +370,7 @@ class Mailboxes {
         array_push($email_list, $mailbox->email);
       }
     }
-    //$email_list = get_theme_mod($this->theme_mod_name);
+    //$email_list = get_option($this->option_name);
     if($email_list && in_array($new_email, $email_list)){
       $valid = 0;
       $error_string .= "Email already exist.<br />";
@@ -384,7 +382,7 @@ class Mailboxes {
   /**
    * The function that reads from theme mod variable tb_settings_mailboxes
    *
-   * @uses get_theme_mod, array_push, explode
+   * @uses get_option, array_push, explode
    * @action
    * @return array list of emails
    */
@@ -396,7 +394,7 @@ class Mailboxes {
         array_push($email_list, $mailbox->email);
       }
     }
-    //$email_list = (Array)get_theme_mod($this->theme_mod_name);
+    //$email_list = get_option($this->option_name);
     $show_list  = array();
     if($email_list){
       foreach($email_list as $email){
@@ -411,7 +409,7 @@ class Mailboxes {
   /**
    * Ajax function for creating email on manage email module
    *
-   * @uses get_theme_mod, set_theme_mod, json_encode, array_push
+   * @uses get_option, update_option, json_encode, array_push
    * @action wp_ajax_create_new_email
    * @return void
    */
@@ -439,14 +437,14 @@ class Mailboxes {
             array_push($email_list, $mailbox->email);
           }
         }
-        //$email_list = get_theme_mod($this->theme_mod_name);
+        //$email_list = get_option($this->option_name);
         if($email_list){
           array_push($email_list,$new_email);
         }
         else{
           $email_list = array($new_email);
         }
-        set_theme_mod($this->theme_mod_name, $email_list);
+        update_option($this->option_name, $email_list);
 
         // Set status code and message
         $status_code = 1;
@@ -469,7 +467,7 @@ class Mailboxes {
   /**
    * Ajax function for deleting email on manage email module
    *
-   * @uses get_theme_mod, array_search, array_splice, set_theme_mod, json_encode
+   * @uses get_option, array_search, array_splice, update_option, json_encode
    * @action wp_ajax_delete_email
    * @return void
    */
@@ -483,7 +481,7 @@ class Mailboxes {
         array_push($email_list, $mailbox->email);
       }
     }
-    //$email_list  = get_theme_mod($this->theme_mod_name);
+    //$email_list  = get_option($this->option_name);
     // Check if the removed addres is on this list, preventing removing another site's email
     if(in_array($email, $email_list)){
       // Delete email using API
@@ -492,7 +490,7 @@ class Mailboxes {
       if($status->result==1){
         $index = array_search($email, $email_list);
         array_splice($email_list, $index, 1);
-        set_theme_mod($this->theme_mod_name, $email_list);
+        update_option($this->option_name, $email_list);
         $status_message = 'Successfully remove email account '.$email;
       }
       else {
@@ -506,7 +504,7 @@ class Mailboxes {
           // Remove from storage if username is stored but email account on cpanel is does not exist
           $index = array_search($email, $email_list);
           array_splice($email_list, $index, 1);
-          set_theme_mod($this->theme_mod_name, $email_list);
+          update_option($this->option_name, $email_list);
           $status_code = 1;
         }
         $status_message = $reason;
@@ -543,7 +541,7 @@ class Mailboxes {
         array_push($email_list, $mailbox->email);
       }
     }
-    //$email_list = get_theme_mod($this->theme_mod_name);
+    //$email_list = get_option($this->option_name);
     if(in_array($email, $email_list)){
       $valid = 1;
       $error_string = '';

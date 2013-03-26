@@ -21,7 +21,7 @@ Add settings to NETWORK ADMIN SETTINGS tab in wp-admin. Settings section called 
 
 * Creates new email account in cPanel.
  
-* Appends the name of the new account to an array called `tb_settings_mailboxes` using wp function `set_theme_mod`. `tb_settings_mailboxes` will contain an array of all the mailboxes created for a given wp site.
+* Appends the name of the new account to an array called `tb_settings_mailboxes` using wp function `update_option`. `tb_settings_mailboxes` will contain an array of all the mailboxes created for a given wp site.
 
 **Method:** 
 
