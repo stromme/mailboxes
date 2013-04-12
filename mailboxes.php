@@ -37,7 +37,7 @@ class Mailboxes {
     // Initialize the cpanel email API
     require_once(plugin_dir_path(__FILE__).'library/cpanel_api_query.php');
     require_once(plugin_dir_path(__FILE__).'library/cpanel_api_email.php');
-    $this->settings = get_option('network_admin_mailboxes_settings');
+    $this->settings = (get_site_option('network_admin_mailboxes_settings'))?get_site_option('network_admin_mailboxes_settings'):get_blog_option(1, 'network_admin_mailboxes_settings');
     $this->option_name = 'tb_settings_mailboxes';
     $this->mailbox = new Cpanel_Api_Email($this->settings);
 
@@ -49,7 +49,7 @@ class Mailboxes {
   /**
    * Load all required files for the plugin to run.
    *
-   * @uses wp_enqueue_script, plugins_url, add_action, get_option, wp_localize_script, wp_enqueue_style, includes_url
+   * @uses wp_enqueue_script, plugins_url, add_action, wp_localize_script, wp_enqueue_style, includes_url
    * @action template_redirect
    * @return null
    */
@@ -103,14 +103,14 @@ class Mailboxes {
         'username' => $username,
         'password' => $password
       );
-      update_option('network_admin_mailboxes_settings', $new_settings);
+      update_site_option('network_admin_mailboxes_settings', $new_settings);
 
       // Queue error message
       add_settings_error('general', 'settings_updated', __('Settings saved'), 'updated');
     }
-    else if (get_option('network_admin_mailboxes_settings')) {
+    else if ((get_site_option('network_admin_mailboxes_settings'))?get_site_option('network_admin_mailboxes_settings'):get_blog_option(1, 'network_admin_mailboxes_settings')) {
       // Load settings if exist
-      $settings = get_option('network_admin_mailboxes_settings');
+      $settings = (get_site_option('network_admin_mailboxes_settings'))?get_site_option('network_admin_mailboxes_settings'):get_blog_option(1, 'network_admin_mailboxes_settings');
       $host     = $settings['host'];
       $domain   = $settings['domain'];
       $port     = $settings['port'];
@@ -155,7 +155,7 @@ class Mailboxes {
     require(plugin_dir_path(__FILE__).'library/mailbox_table.php');
     $setting_exists = true; // Useful in form template
 
-    if (get_option('network_admin_mailboxes_settings')) {
+    if ((get_site_option('network_admin_mailboxes_settings'))?get_site_option('network_admin_mailboxes_settings'):get_blog_option(1, 'network_admin_mailboxes_settings')) {
       $new_username   = $_POST['username'];
       $new_password   = $_POST['password'];
       $new_forwarding = $_POST['forwarding'];
@@ -318,7 +318,7 @@ class Mailboxes {
         default:
           break;
       }
-      $settings = get_option('network_admin_mailboxes_settings');
+      $settings = (get_site_option('network_admin_mailboxes_settings'))?get_site_option('network_admin_mailboxes_settings'):get_blog_option(1, 'network_admin_mailboxes_settings');
       $domain = $settings["domain"];
     }
     else {
