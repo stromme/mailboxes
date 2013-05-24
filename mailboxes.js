@@ -45,14 +45,18 @@ function add_new_email(new_email, new_pass, forwarding, success_callback, failed
   },
   // Ajax replied
   function(response){
-    var json_response = JSON.parse(response);
-    if(json_response.status==1){
-      container.prepend(email_list_template(json_response.account_email));
-      if(typeof(success_callback=="function")) success_callback();
-    }
-    else {
-      //if(typeof(failed_callback=="function")) failed_callback();
-      bootstrap_alert(json_response.status_message, 'error');
+    try {
+      var json_response = JSON.parse(response);
+      if(json_response.status==1){
+        container.prepend(email_list_template(json_response.account_email));
+        if(typeof(success_callback=="function")) success_callback();
+      }
+      else {
+        //if(typeof(failed_callback=="function")) failed_callback();
+        bootstrap_alert(json_response.status_message, 'error');
+      }
+    } catch (e) {
+      bootstrap_alert('Connection error', 'error');
     }
   },
   function(){
@@ -84,13 +88,17 @@ function confirm_delete_email(email, success_callback, failed_callback){
   },
   // Ajax replied
   function(response){
-    var json_response = JSON.parse(response);
-    if(json_response.status==1){
-      if(typeof(success_callback)=='function') success_callback();
-    }
-    else {
-      bootstrap_alert(json_response.status_message, 'error');
-      if(typeof(failed_callback)=='function') failed_callback();
+    try {
+      var json_response = JSON.parse(response);
+      if(json_response.status==1){
+        if(typeof(success_callback)=='function') success_callback();
+      }
+      else {
+        bootstrap_alert(json_response.status_message, 'error');
+        if(typeof(failed_callback)=='function') failed_callback();
+      }
+    } catch (e) {
+      bootstrap_alert('Connection error', 'error');
     }
   },
   function(){
@@ -125,14 +133,18 @@ function confirm_change_password(email, new_password, success_callback, failed_c
   },
   // Ajax replied
   function(response){
-    var json_response = JSON.parse(response);
-    if(json_response.status==1){
-      bootstrap_alert(json_response.status_message, 'success');
-      if(typeof(success_callback)=='function') success_callback();
-    }
-    else {
-      bootstrap_alert(json_response.status_message, 'error');
-      if(typeof(failed_callback)=='function') failed_callback();
+    try {
+      var json_response = JSON.parse(response);
+      if(json_response.status==1){
+        bootstrap_alert(json_response.status_message, 'success');
+        if(typeof(success_callback)=='function') success_callback();
+      }
+      else {
+        bootstrap_alert(json_response.status_message, 'error');
+        if(typeof(failed_callback)=='function') failed_callback();
+      }
+    } catch (e) {
+      bootstrap_alert('Connection error', 'error');
     }
   },
   function(){
