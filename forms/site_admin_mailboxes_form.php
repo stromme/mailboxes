@@ -1,5 +1,4 @@
 <div class="wrap">
-  <?php screen_icon('options-general'); ?>
   <h2>Mailboxes Settings<?php if($setting_exists){ ?><a id="add_email_button" href="#" class="add-new-h2">Add Email</a><?php } ?></h2>
 
   <?php if($setting_exists){ ?>

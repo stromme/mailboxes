@@ -1,5 +1,4 @@
 <div class="wrap">
-  <?php screen_icon('options-general'); ?>
   <h2>Mailboxes Settings</h2>
 
   <form method="post" action="">

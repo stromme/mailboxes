@@ -1,5 +1,4 @@
 <div class="wrap">
-  <?php screen_icon('options-general'); ?>
   <h2>Change Password</h2>
 
   <?php if($setting_exists){ ?>
